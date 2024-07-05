@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Income Tax Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='newtaxcal.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id="container">
+        <form id="taxForm">
+            <label for="income">Enter your annual income (in ₹):</label>
+            <input type="number" id="income" name="income" required>
+            <label for="std_deduction">Standard Deduction (in ₹):</label>
+            <input type="number" id="std_deduction" name="std_deduction" value="50000">
+            <label for="nps_contribution">NPS Contribution (in ₹):</label>
+            <input type="number" id="nps_contribution" name="nps_contribution" value="50000">
+            <label for="regime">Select Tax Regime:</label>
+            <select id="regime" name="regime">
+                <option value="old">Old Regime</option>
+                <option value="new_before_2023">New Regime (Before Budget 2023)</option>
+                <option value="new_after_2023">New Regime (After Budget 2023)</option>
+            </select>
+            <button type="button" onclick="calculateTax()">Calculate</button>
+        </form>
+        <div id="results"></div>
+        <div id="graphs"></div>
+    </div>
+    <script>
+        document.getElementById('taxForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            calculateTax();
+        });
+
+        function calculateTax() {
+            const income = parseFloat(document.getElementById('income').value);
+            const std_deduction = parseFloat(document.getElementById('std_deduction').value);
+            const nps_contribution = parseFloat(document.getElementById('nps_contribution').value);
+            const regime = document.getElementById('regime').value;
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    income: income,
+                    std_deduction: std_deduction,
+                    nps_contribution: nps_contribution,
+                    regime: regime
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('results').innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    document.getElementById('results').innerHTML = `
+                        <p>Adjusted Income: ₹${data.adjustedIncome.toFixed(2)}</p>
+                        <p>Total Tax: ₹${data.totalTax.toFixed(2)}</p>
+                        <p>Effective Tax Rate: ${data.effectiveTaxRate.toFixed(2)}%</p>
+                        <h3>Tax Summary</h3>
+                        <ul>
+                            ${data.taxSummary.map(item => `<li>${item.range}: ${item.rate}% - ₹${item.effectiveTax}</li>`).join('')}
+                        </ul>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = `<p>Error: ${error}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>

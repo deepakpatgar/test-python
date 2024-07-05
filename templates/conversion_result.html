@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversion Result</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Conversion Result</h1>
+        {% if conversion_results %}
+        <h2>Original Value: {{ conversion_results['value'] }}</h2>
+        <h3>Conversion Type: {{ conversion_results['data_type'] }}</h3>
+        <ul class="list-group mt-4">
+            {% for unit, result in conversion_results['results'].items() %}
+            <li class="list-group-item">{{ unit }}: {{ result }}</li>
+            {% endfor %}
+        </ul>
+        <div class="mt-5">
+            <h3>Visualization</h3>
+            <img src="data:image/png;base64,{{ conversion_results['plot_url'] }}" class="img-fluid" alt="Conversion Plot">
+        </div>
+        <a href="/" class="btn btn-primary mt-4">Convert Another</a>
+        <a href="/{{ conversion_results['data_type'] }}" class="btn btn-secondary mt-4">Switch to {{ conversion_results['data_type'] }} Conversion</a>
+        {% else %}
+        <p>No conversion results found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

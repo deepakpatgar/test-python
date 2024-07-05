@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Speed Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function updateSpeedStats() {
+            const response = await fetch('/speed_stats');
+            const data = await response.json();
+            
+            // Update the table
+            let tableBody = document.getElementById('speedTableBody');
+            tableBody.innerHTML = '';
+            data.forEach((stat, index) => {
+                let row = tableBody.insertRow();
+                row.insertCell(0).innerText = index + 1;
+                row.insertCell(1).innerText = stat.download.toFixed(2);
+                row.insertCell(2).innerText = stat.upload.toFixed(2);
+                row.insertCell(3).innerText = stat.ping.toFixed(2);
+            });
+
+            // Update the chart
+            updateChart(data);
+        }
+
+        function updateChart(data) {
+            const downloadSpeeds = data.map(stat => stat.download);
+            const uploadSpeeds = data.map(stat => stat.upload);
+            const pings = data.map(stat => stat.ping);
+
+            downloadChart.data.datasets[0].data = downloadSpeeds;
+            uploadChart.data.datasets[0].data = uploadSpeeds;
+            pingChart.data.datasets[0].data = pings;
+
+            downloadChart.update();
+            uploadChart.update();
+            pingChart.update();
+        }
+
+        let downloadChart, uploadChart, pingChart;
+        window.onload = function() {
+            // Initialize charts
+            const ctx1 = document.getElementById('downloadChart').getContext('2d');
+            downloadChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: Array(10).fill(''),
+                    datasets: [{
+                        label: 'Download Speed (Mbps)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        data: []
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('uploadChart').getContext('2d');
+            uploadChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: Array(10).fill(''),
+                    datasets: [{
+                        label: 'Upload Speed (Mbps)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        data: []
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const ctx3 = document.getElementById('pingChart').getContext('2d');
+            pingChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: Array(10).fill(''),
+                    datasets: [{
+                        label: 'Ping (ms)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        data: []
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Fetch initial data
+            updateSpeedStats();
+
+            // Refresh data every 5 seconds
+            setInterval(updateSpeedStats, 5000);
+        };
+    </script>
+</head>
+<body>
+    <h1>Internet Speed Monitor</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Download Speed (Mbps)</th>
+                <th>Upload Speed (Mbps)</th>
+                <th>Ping (ms)</th>
+            </tr>
+        </thead>
+        <tbody id="speedTableBody">
+            <!-- Dynamic content will be inserted here -->
+        </tbody>
+    </table>
+    <canvas id="downloadChart" width="400" height="200"></canvas>
+    <canvas id="uploadChart" width="400" height="200"></canvas>
+    <canvas id="pingChart" width="400" height="200"></canvas>
+</body>
+</html>

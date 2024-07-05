@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Calendar View</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: #444;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        form input, form select, form button {
+            margin: 0 10px;
+            padding: 10px;
+            font-size: 1rem;
+        }
+        form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #45a049;
+        }
+        .current-day {
+            background-color: #ffeb3b;
+        }
+        .event-day {
+            background-color: lightorange;
+        }
+        .us-holiday {
+            background-color: lightblue; /* Define your desired light blue color */
+        }
+        .indian-holiday {
+            background-color: #d2691e; /* Define your desired light brown color */
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .month-view {
+            display: inline-block;
+            margin: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .month-view h3 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .plots {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .plot {
+            width: 45%;
+            margin: 0 10px;
+        }
+        .event-description, .holiday-description {
+            background-color: #ffeb3b;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Professional Calendar View</h1>
+    <form method="get" action="/">
+        <input type="number" name="year" value="{{ year }}" min="1900" max="2073" required>
+        <select name="view">
+            <option value="year" {% if view == 'year' %}selected{% endif %}>Year</option>
+            <option value="month" {% if view == 'month' %}selected{% endif %}>Month</option>
+            <option value="week" {% if view == 'week' %}selected{% endif %}>Week</option>
+            <option value="day" {% if view == 'day' %}selected{% endif %}>Day</option>
+        </select>
+        <input type="number" name="month" value="{{ month }}" min="1" max="12" required>
+        <input type="number" name="week" value="{{ week }}" min="1" max="52" required>
+        <input type="number" name="day" value="{{ day }}" min="1" max="31" required>
+        <button type="submit">Go</button>
+    </form>
+    <div class="container">
+        {% if calendar_data.type == 'year' %}
+            {% for month_data in calendar_data.data %}
+                <div class="month-view">
+                    <h3>{{ month_data[1] }} {{ year }}</h3>
+                    <table>
+                        <tr>
+                            <th>Sun</th>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                        </tr>
+                        {% for week in month_data[2] %}
+                            <tr>
+                                {% for day, has_event, has_holiday in week %}
+                                    <td class="{% if day == current_date.day and month_data[0] == current_date.month and year == current_date.year %}current-day{% endif %} {% if has_event %}event-day{% endif %} {% for holiday, holiday_type in holiday_data %}{% if day != 0 and holiday and holiday_type == 'us' %}us-holiday{% elif day != 0 and holiday and holiday_type == 'indian' %}indian-holiday{% endif %}{% endfor %}">
+                                        {{ day if day != 0 else '' }}
+                                        {% if events.get((year, month_data[0], day)) %}
+                                            <div class="event-description">{{ events[(year, month_data[0], day)] }}</div>
+                                        {% endif %}
+                                        {% for holiday, holiday_type in holiday_data %}
+                                            {% if holiday_type == 'us' %}
+                                                <div class="holiday-description us-holiday">{{ holiday }}</div>
+                                            {% elif holiday_type == 'indian' %}
+                                                <div class="holiday-description indian-holiday">{{ holiday }}</div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% endfor %}
+        {% elif calendar_data.type == 'month' %}
+            <div class="month-view">
+                <h3>{{ calendar_data.month_name }} {{ calendar_data.year }}</h3>
+                <table>
+                    <tr>
+                        <th>Sun</th>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                    </tr>
+                    {% for week in calendar_data.data %}
+                        <tr>
+                            {% for day, has_event, has_holiday in week %}
+                                <td class="{% if day == current_date.day and calendar_data.month_name == current_date.strftime('%B') and year == current_date.year %}current-day{% endif %} {% if has_event %}event-day{% endif %} {% for holiday, holiday_type in holiday_data %}{% if day != 0 and holiday and holiday_type == 'us' %}us-holiday{% elif day != 0 and holiday and holiday_type == 'indian' %}indian-holiday{% endif %}{% endfor %}">
+                                    {{ day if day != 0 else '' }}
+                                    {% if events.get((year, calendar_data.month, day)) %}
+                                        <div class="event-description">{{ events[(year, calendar_data.month, day)] }}</div>
+                                    {% endif %}
+                                    {% for holiday, holiday_type in holiday_data %}
+                                        {% if holiday_type == 'us' %}
+                                            <div class="holiday-description us-holiday">{{ holiday }}</div>
+                                        {% elif holiday_type == 'indian' %}
+                                            <div class="holiday-description indian-holiday">{{ holiday }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% elif calendar_data.type == 'week' %}
+            <div class="week-view">
+                <h3>Week {{ week }} of {{ year }}</h3>
+                <table>
+                    <tr>
+                        <th>Sun</th>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                    </tr>
+                    <tr>
+                        {% for day, has_event, has_holiday in calendar_data.data %}
+                            <td class="{% if day.date() == current_date.date() %}current-day{% endif %} {% if has_event %}event-day{% endif %} {% for holiday, holiday_type in holiday_data %}{% if day.date() == holiday and holiday_type == 'us' %}us-holiday{% elif day.date() == holiday and holiday_type == 'indian' %}indian-holiday{% endif %}{% endfor %}">
+                                {{ day.day }}
+                                {% if events.get((day.year, day.month, day.day)) %}
+                                    <div class="event-description">{{ events[(day.year, day.month, day.day)] }}</div>
+                                {% endif %}
+                                {% for holiday, holiday_type in holiday_data %}
+                                    {% if day.date() == holiday %}
+                                        {% if holiday_type == 'us' %}
+                                            <div class="holiday-description us-holiday">{{ holiday }}</div>
+                                        {% elif holiday_type == 'indian' %}
+                                            <div class="holiday-description indian-holiday">{{ holiday }}</div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </div>
+        {% elif calendar_data.type == 'day' %}
+            <div class="day-view">
+                <h3>{{ calendar_data.data.strftime('%A, %B %d, %Y') }}</h3>
+                <div class="event-description">
+                    {% if events.get((year, month, day)) %}
+                        {{ events[(year, month, day)] }}
+                    {% else %}
+                        No events for this day.
+                    {% endif %}
+                </div>
+                {% for holiday, holiday_type in holiday_data %}
+                    {% if day == holiday %}
+                        {% if holiday_type == 'us' %}
+                            <div class="holiday-description us-holiday">{{ holiday }}</div>
+                        {% elif holiday_type == 'indian' %}
+                            <div class="holiday-description indian-holiday">{{ holiday }}</div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="plots">
+        <div class="plot">
+            <h3>Sunrise and Sunset (IST)</h3>
+            <p>Sunrise: {{ sunrise }}</p>
+            <p>Sunset: {{ sunset }}</p>
+        </div>
+        <div class="plot">
+            <h3>Moon Phase</h3>
+            <p>{{ moon_phase }}</p>
+        </div>
+    </div>
+</body>
+</html>

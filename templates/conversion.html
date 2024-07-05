@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Length, Weight, and Area Converter</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Length, Weight, and Area Converter</h1>
+        <form method="POST" action="/convert">
+            <div class="form-group">
+                <label for="data_type">Select Conversion Type:</label>
+                <select class="form-control" id="data_type" name="data_type">
+                    <option value="length">Length</option>
+                    <option value="weight">Weight</option>
+                    <option value="area">Area</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="value">Enter Value to Convert:</label>
+                <input type="number" class="form-control" id="value" name="value" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Convert</button>
+        </form>
+    </div>
+</body>
+</html>

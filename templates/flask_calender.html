@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Calendar View</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: #444;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        form input, form select, form button {
+            margin: 0 10px;
+            padding: 10px;
+            font-size: 1rem;
+        }
+        form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #45a049;
+        }
+        .current-day {
+            background-color: #ffeb3b;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .month-view {
+            display: inline-block;
+            margin: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .month-view h3 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .plots {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .plot {
+            width: 45%;
+            margin: 0 10px;
+        }
+        .event-description, .holiday-description {
+            background-color: #ffeb3b;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Professional Calendar View</h1>
+    <form method="get" action="/">
+        <label for="year">Year:</label>
+        <input type="number" id="year" name="year" value="{{ year }}" min="1900" max="2073">
+        <label for="month">Month:</label>
+        <input type="number" id="month" name="month" value="{{ month }}" min="1" max="12">
+        <label for="day">Day:</label>
+        <input type="number" id="day" name="day" value="{{ day }}" min="1" max="31">
+        <label for="view">View:</label>
+        <select id="view" name="view">
+            <option value="year" {% if view == 'year' %}selected{% endif %}>Yearly</option>
+            <option value="month" {% if view == 'month' %}selected{% endif %}>Monthly</option>
+            <option value="week" {% if view == 'week' %}selected{% endif %}>Weekly</option>
+            <option value="day" {% if view == 'day' %}selected{% endif %}>Daily</option>
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if calendar_data.type == 'year' %}
+        <h2>{{ year }}</h2>
+        <div class="container">
+            {% for month_index, month_name, month_days in calendar_data.data %}
+                <div class="month-view">
+                    <h3>{{ month_name }}</h3>
+                    <table>
+                        <tr>
+                            {% for day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] %}
+                                <th>{{ day }}</th>
+                            {% endfor %}
+                        </tr>
+                        {% for week in month_days %}
+                            <tr>
+                                {% for day in week %}
+                                    <td class="{% if year == current_date.year and month_index == current_date.month and day == current_date.day %}current-day{% endif %}">
+                                        {{ day if day != 0 else '' }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif calendar_data.type == 'month' %}
+        <h2>{{ calendar_data.month_name }} {{ year }}</h2>
+        <table>
+            <tr>
+                {% for day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] %}
+                    <th>{{ day }}</th>
+                {% endfor %}
+            </tr>
+            {% for week in calendar_data.data %}
+                <tr>
+                    {% for day in week %}
+                        <td class="{% if year == current_date.year and calendar_data.month_name == current_date.strftime('%B') and day == current_date.day %}current-day{% endif %}">
+                            {{ day if day != 0 else '' }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% elif calendar_data.type == 'week' %}
+        <h2>Week {{ calendar_data.data[0].isocalendar()[1] }} of {{ year }}</h2>
+        <table>
+            <tr>
+                {% for day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] %}
+                    <th>{{ day }}</th>
+                {% endfor %}
+            </tr>
+            <tr>
+                {% for day in calendar_data.data %}
+                    <td class="{% if day.date() == current_date.date() %}current-day{% endif %}">
+                        {{ day.day }}
+                    </td>
+                {% endfor %}
+            </tr>
+        </table>
+    {% elif calendar_data.type == 'day' %}
+        <h2>{{ calendar_data.data.strftime('%A, %B %d, %Y') }}</h2>
+    {% endif %}
+
+    {% if historical_events %}
+        <div class="event-description">
+            <strong>Historical Event:</strong> {{ historical_events }}
+        </div>
+    {% endif %}
+
+    {% if holiday_data %}
+        <div class="holiday-description">
+            <strong>Holiday:</strong> {{ holiday_data }}
+        </div>
+    {% endif %}
+
+    <div class="plots">
+        <div class="plot">
+            <h3>Monthly Event Trends</h3>
+            <img src="/static/monthly_events.png" alt="Monthly Events Plot">
+        </div>
+        <div class="plot">
+            <h3>Weekly Event Trends</h3>
+            <img src="/static/weekly_events.png" alt="Weekly Events Plot">
+        </div>
+    </div>
+</body>
+</html>
+

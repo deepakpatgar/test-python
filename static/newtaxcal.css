@@ -1,0 +1,88 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+    color: #333;
+}
+
+form {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+input[type="number"],
+input[type="text"],
+button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    background: #333;
+    color: #fff;
+    border: 0;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #555;
+}
+
+#taxResult {
+    margin-top: 20px;
+}
+
+#taxTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#taxTable th, #taxTable td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+#taxTable th {
+    background-color: #f2f2f2;
+    color: #333;
+}
+
+#taxTable td {
+    background-color: #f9f9f9;
+}
+
+#totalTax, #effectiveTaxRate, #deductionImpact {
+    margin-top: 20px;
+    font-size: 1.2em;
+    color: #333;
+}
+
+#taxVisualization, #taxRateVisualization, #deductionsVisualization, #historyVisualization {
+    margin-top: 20px;
+}

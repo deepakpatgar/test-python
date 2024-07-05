@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Income Tax Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='taxcal.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Income Tax Calculator for FY 2024-25</h1>
+        <form id="taxForm" method="POST">
+            <label for="income">Enter your income (₹):</label>
+            <input type="number" id="income" name="income" required>
+            <label for="std_deduction">Standard Deduction (₹):</label>
+            <input type="number" id="std_deduction" name="std_deduction" value="50000" required>
+            <label for="nps_contribution">NPS Tier 1 Contribution (₹):</label>
+            <input type="number" id="nps_contribution" name="nps_contribution" value="50000" required>
+            <button type="submit">Calculate Tax</button>
+        </form>
+        <div id="taxResult">
+            <h2>Tax Calculation Summary</h2>
+            <table id="taxTable">
+                <thead>
+                    <tr>
+                        <th>Income Range</th>
+                        <th>Tax Rate (%)</th>
+                        <th>Effective Tax (₹)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <p id="totalTax"></p>
+            <p id="effectiveTaxRate"></p>
+            <p id="deductionImpact"></p>
+        </div>
+        <div id="taxVisualization"></div>
+        <div id="taxRateVisualization"></div>
+        <div id="deductionsVisualization"></div>
+
+        <h2>Historical Data Visualization</h2>
+        <form id="historyForm" method="POST">
+            <label for="incomes">Previous Years' Incomes (comma separated):</label>
+            <input type="text" id="incomes" name="incomes" placeholder="e.g., 3000000, 3200000" required>
+            <label for="taxes">Previous Years' Taxes Deducted (comma separated):</label>
+            <input type="text" id="taxes" name="taxes" placeholder="e.g., 300000, 320000" required>
+            <label for="refunds">Previous Years' Refunds (comma separated):</label>
+            <input type="text" id="refunds" name="refunds" placeholder="e.g., 10000, 15000" required>
+            <button type="submit">Visualize History</button>
+        </form>
+        <div id="historyVisualization"></div>
+    </div>
+    
+    <script>
+        document.getElementById('taxForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const income = document.getElementById('income').value;
+            const std_deduction = document.getElementById('std_deduction').value;
+            const nps_contribution = document.getElementById('nps_contribution').value;
+            
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    income: income, 
+                    std_deduction: std_deduction, 
+                    nps_contribution: nps_contribution 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('taxResult').innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    // Populate the tax table
+                    const tbody = document.getElementById('taxTable').querySelector('tbody');
+                    tbody.innerHTML = '';
+                    data.taxSummary.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${row.range}</td><td>${row.rate}</td><td>${row.effectiveTax}</td>`;
+                        tbody.appendChild(tr);
+                    });
+
+                    // Populate the summary and explanation texts
+                    document.getElementById('totalTax').innerText = `Total Tax Payable: ₹${data.totalTax}`;
+                    document.getElementById('effectiveTaxRate').innerText = `Effective Tax Rate: ${data.effectiveTaxRate}%`;
+                    document.getElementById('deductionImpact').innerText = `Deductions Impact: Your taxable income after deductions is ₹${data.adjustedIncome}.`;
+
+                    // Fetch visualization
+                    fetch('/visualize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            income: income, 
+                            std_deduction: std_deduction, 
+                            nps_contribution: nps_contribution 
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const graphDiv = document.getElementById('taxVisualization');
+                        Plotly.newPlot(graphDiv, JSON.parse(data.graphJSON));
+
+                        const rateDiv = document.getElementById('taxRateVisualization');
+                        Plotly.newPlot(rateDiv, JSON.parse(data.graphJSON_rate));
+
+                        const deductionsDiv = document.getElementById('deductionsVisualization');
+                        Plotly.newPlot(deductionsDiv, JSON.parse(data.graphJSON_deductions));
+                    });
+                }
+            });
+        });
+
+        document.getElementById('historyForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const incomes = document.getElementById('incomes').value.split(',').map(Number);
+            const taxes = document.getElementById('taxes').value.split(',').map(Number);
+            const refunds = document.getElementById('refunds').value.split(',').map(Number);
+            
+            fetch('/history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    incomes: incomes, 
+                    taxes: taxes, 
+                    refunds: refunds 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const graphDiv = document.getElementById('historyVisualization');
+                graphDiv.innerHTML = ''; // Clear previous visualizations
+                data.graphs.forEach(graphJSON => {
+                    const newDiv = document.createElement('div');
+                    Plotly.newPlot(newDiv, JSON.parse(graphJSON));
+                    graphDiv.appendChild(newDiv);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+h1, h2 {
+    color: #007bff;
+}
+
+.container {
+    max-width: 600px;
+    margin-top: 50px;
+}
+
+form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+ul.list-group {
+    margin-top: 20px;
+}
