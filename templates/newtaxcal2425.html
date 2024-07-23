@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='newtaxcal2425.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Tax Calculator</h1>
+        <form id="taxForm">
+            <div class="form-group">
+                <label for="income">Annual Income (₹):</label>
+                <input type="number" id="income" name="income" required>
+            </div>
+            <div class="form-group">
+                <label for="std_deduction">Standard Deduction (₹):</label>
+                <input type="number" id="std_deduction" name="std_deduction" value="50000" required>
+            </div>
+            <div class="form-group">
+                <label for="nps_contribution">NPS Contribution (₹):</label>
+                <input type="number" id="nps_contribution" name="nps_contribution" value="50000" required>
+            </div>
+            <div class="form-group">
+                <label for="regime">Tax Regime:</label>
+                <select id="regime" name="regime">
+                    <option value="old">Old Regime</option>
+                    <option value="new_before_2023">New Regime (Before Budget 2023)</option>
+                    <option value="new_after_2023">New Regime (After Budget 2023)</option>
+                    <option value="new_2024_25">New Regime (FY 2024-25)</option>
+                </select>
+            </div>
+            <button type="submit">Calculate</button>
+        </form>
+        <div id="results"></div>
+        <div id="visualization"></div>
+    </div>
+    <script>
+        document.getElementById('taxForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const income = parseFloat(document.getElementById('income').value);
+            const std_deduction = parseFloat(document.getElementById('std_deduction').value);
+            const nps_contribution = parseFloat(document.getElementById('nps_contribution').value);
+            const regime = document.getElementById('regime').value;
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ income, std_deduction, nps_contribution, regime })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('results').innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    let resultsHtml = '<h2>Tax Summary</h2>';
+                    resultsHtml += `<p>Adjusted Income: ₹${data.adjustedIncome.toFixed(2)}</p>`;
+                    resultsHtml += `<p>Total Tax: ₹${data.totalTax.toFixed(2)}</p>`;
+                    resultsHtml += `<p>Effective Tax Rate: ${data.effectiveTaxRate.toFixed(2)}%</p>`;
+                    resultsHtml += '<h3>Tax Breakdown</h3>';
+                    resultsHtml += '<ul>';
+                    data.taxSummary.forEach(item => {
+                        resultsHtml += `<li>${item.range} @ ${item.rate}%: ₹${item.effectiveTax.toFixed(2)}</li>`;
+                    });
+                    resultsHtml += '</ul>';
+                    document.getElementById('results').innerHTML = resultsHtml;
+
+                    fetch('/visualize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ income, std_deduction, nps_contribution, regime })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(graphData => {
+                        const plotDiv = document.createElement('div');
+                        plotDiv.id = 'taxPlot';
+                        document.getElementById('visualization').innerHTML = '';
+                        document.getElementById('visualization').appendChild(plotDiv);
+                        Plotly.newPlot('taxPlot', JSON.parse(graphData.graphJSON));
+
+                        const plotDivRate = document.createElement('div');
+                        plotDivRate.id = 'taxRatePlot';
+                        document.getElementById('visualization').appendChild(plotDivRate);
+                        Plotly.newPlot('taxRatePlot', JSON.parse(graphData.graphJSON_rate));
+
+                        const plotDivDeductions = document.createElement('div');
+                        plotDivDeductions.id = 'deductionsPlot';
+                        document.getElementById('visualization').appendChild(plotDivDeductions);
+                        Plotly.newPlot('deductionsPlot', JSON.parse(graphData.graphJSON_deductions));
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
